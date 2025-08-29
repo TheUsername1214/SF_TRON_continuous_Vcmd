@@ -5,11 +5,12 @@ from utils.Useful_Function import *
 from utils.Reward_Function import *
 from utils.Isaac_Sim_Initialization import *
 from utils.Cost_Transport import *
+
 COT = Cost_Transport()
 # 导入Isaac Sim
 from isaacsim import SimulationApp
 
-headless = 1 # 是否开启UI
+headless = 0  # 是否开启UI
 sim = SimulationApp({"headless": headless})  # 启动Isaac Sim 软件， 必须放在导入Isaac sim 库之前。
 from isaacsim.core.api import World
 import isaacsim.core.utils.stage as stage_utils
@@ -122,8 +123,6 @@ class PPO:
         collision_filter_paths = [ground_plane_path]
         world_prim_path = "/World/" + self.prim_path
 
-
-
         # 添加参考模型并克隆
         stage_utils.add_reference_to_stage(self.file_path, world_prim_path + "_0")
         cloner = Cloner()
@@ -147,20 +146,17 @@ class PPO:
             name="RigidContactView1",
             max_contact_count=10,
             contact_filter_prim_paths_expr=[],
-        track_contact_forces = True)
+            track_contact_forces=True)
 
         self.foot_R_sensor = RigidPrim(
             prim_paths_expr=prim_expr + "/" + self.prim_path + "/ankle_R_Link",
             name="RigidContactView2",
             max_contact_count=10,
             contact_filter_prim_paths_expr=[],
-        track_contact_forces = True)
-
+            track_contact_forces=True)
 
         print("add prim")
         self.world.scene.add(prim)
-
-
 
         # 初始化世界和传感器
         print("world reset")
@@ -168,7 +164,6 @@ class PPO:
         print("sensor reset")
         self.foot_L_sensor.initialize()
         self.foot_R_sensor.initialize()
-
 
     def prim_initialization(self, agent_index):
         """
@@ -187,7 +182,7 @@ class PPO:
         self.vel_cmd[agent_index, 0] = self.vel_cmd_scale * torch.rand(num_agents, device=self.device)
         self.time[agent_index, 0] = 0
         self.L_feet_air_time[agent_index] = 0
-        self.R_feet_air_time[agent_index] =0
+        self.R_feet_air_time[agent_index] = 0
 
         # 获取prim并设置身体速度
         prim = self.world.scene.get_object("rigid_prim_view")
@@ -234,8 +229,8 @@ class PPO:
         # 获得机器人body高度 和 Abad 关节角度
         self.linear_vel = prim.get_linear_velocities()
         self.body_height = self.body_pos[:, 2]
-        L_foot_contact_force = self.foot_L_sensor.get_net_contact_forces()[:,2]
-        R_foot_contact_force = self.foot_R_sensor.get_net_contact_forces()[:,2]
+        L_foot_contact_force = self.foot_L_sensor.get_net_contact_forces()[:, 2]
+        R_foot_contact_force = self.foot_R_sensor.get_net_contact_forces()[:, 2]
         self.L_foot_contact_situation = L_foot_contact_force > 1e-5
         self.R_foot_contact_situation = R_foot_contact_force > 1e-5
         # #——————————————————————获取额外机器人状态结束————————————————————————————————##
@@ -280,11 +275,11 @@ class PPO:
 
         # 累加扭矩用量，用于奖励计算
         self.effort1 += torch.sum(torque ** 2, dim=1) / (self.sub_step * 8)
-        self.effort2 += torch.sum(torch.clip(torque * joint_vel, 0, 11111)**2, dim=1) / (self.sub_step * 8)
+        self.effort2 += torch.sum(torch.clip(torque * joint_vel, 0, 11111) ** 2, dim=1) / (self.sub_step * 8)
         if not self.train:
             COT.compute_motor_energy(0, torque.cpu().numpy().flatten(), joint_pos.cpu().numpy().flatten(),
                                      joint_vel.cpu().numpy().flatten(),
-                                     self.time.cpu().numpy().flatten(), self.dt/self.sub_step)
+                                     self.time.cpu().numpy().flatten(), self.dt / self.sub_step)
         # 施加扭矩
         prim.set_joint_efforts(torque)
 
@@ -318,9 +313,9 @@ class PPO:
         # 获得机器人body高度 和 Abad 关节角度
         self.next_body_height = self.next_body_pos[:, 2]
         self.next_linear_vel = prim.get_linear_velocities()
-        L_foot_contact_force = self.foot_L_sensor.get_net_contact_forces()[:,2]
-        R_foot_contact_force = self.foot_R_sensor.get_net_contact_forces()[:,2]
-        self.abad_joint = self.next_joint_pos[:,-2:]
+        L_foot_contact_force = self.foot_L_sensor.get_net_contact_forces()[:, 2]
+        R_foot_contact_force = self.foot_R_sensor.get_net_contact_forces()[:, 2]
+        self.abad_joint = self.next_joint_pos[:, -2:]
         self.next_L_foot_contact_situation = L_foot_contact_force > 1e-5
         self.next_R_foot_contact_situation = R_foot_contact_force > 1e-5
         self.next_L_foot_ori = get_euler_angle(self.foot_L_sensor.get_world_poses()[1])
@@ -343,9 +338,9 @@ class PPO:
         self.L_feet_air_time += self.dt * (~self.next_L_foot_contact_situation)
         self.R_feet_air_time += self.dt * (~self.next_R_foot_contact_situation)
 
-        foot_air_reward = ((self.L_feet_air_time)*L_touching_ground+
-                           (self.R_feet_air_time)*R_touching_ground).clip(-11,0.5)
-        too_long = (self.L_feet_air_time>0.6) | (self.R_feet_air_time>0.6)
+        foot_air_reward = ((self.L_feet_air_time-0.5) * L_touching_ground +
+                           (self.R_feet_air_time-0.5) * R_touching_ground)
+        too_long = (self.L_feet_air_time > 0.6) | (self.R_feet_air_time > 0.6)
 
         self.L_feet_air_time *= (~self.next_L_foot_contact_situation)
         self.R_feet_air_time *= (~self.next_R_foot_contact_situation)
@@ -359,47 +354,43 @@ class PPO:
              self.R_feet_air_time.view(-1, 1)
              ), dim=1)
 
-
         # ——————————————————————奖励————————————————————————————————
         # 速度跟踪
-        reward_vel_track = 1.5 * exp_sum(self.vel_cmd[:, :2],
-                                       self.next_linear_vel[:, :2],
-                                       0.3)
+        reward_vel_track = 1 * exp_sum(self.vel_cmd[:, :2],
+                                         self.next_linear_vel[:, :2],
+                                         0.5)
 
         # 高度跟踪
-        reward_height_track = 0.15 * exp_sum(self.target_height, self.next_body_height, 0.3, 1)
+        reward_height_track = 0.1 * exp_sum(self.target_height, self.next_body_height, 0.3, 1)
 
         # 方向跟踪
-        reward_ori_track = 0.1 * exp_sum(self.target_ori[:, 2],
-                                          self.next_body_ori[:, 2], 0.3, 1)
-        reward_ori_track += 0.1 * exp_sum(self.target_ori[:, 0],
+        reward_ori_track = 0.05 * exp_sum(self.target_ori[:, 2],
+                                         self.next_body_ori[:, 2], 0.3, 1)
+        reward_ori_track += 0.05 * exp_sum(self.target_ori[:, 0],
                                           self.next_body_ori[:, 0], 0.3, 1)
 
         # 约束足部位置
-        foot_regularization_reward = -0.3 * (torch.abs(self.next_L_foot_y - self.next_R_foot_y) > 0.35).float()
-        foot_regularization_reward += -0.3 * (torch.abs(self.next_L_foot_z - self.next_R_foot_z) > 0.35).float()
-        foot_regularization_reward += -0.3 * (torch.abs(self.next_L_foot_x - self.next_R_foot_x) > 0.7).float()
-
-        # foot_regularization_reward += -0.3 * torch.sum(torch.abs(self.abad_joint),dim=1)
+        foot_regularization_reward = -0.1 * (torch.abs(self.next_L_foot_y - self.next_R_foot_y) > 0.25).float()
+        foot_regularization_reward += -0.1 * (torch.abs(self.next_L_foot_y - self.next_R_foot_y) < 0.15).float()
+        foot_regularization_reward += -0.1 * (torch.abs(self.next_L_foot_z - self.next_R_foot_z) > 0.35).float()
+        foot_regularization_reward += -0.1 * (torch.abs(self.next_L_foot_x - self.next_R_foot_x) > 0.7).float()
 
         # 奖励SF
         walking_phase_reward = 0.5 * (2*(self.next_L_foot_contact_situation != self.next_R_foot_contact_situation).float()-1)
 
         # 足部奖励
-        feet_air_time = 0.2*foot_air_reward
-        feet_air_time += -0.3*too_long
-        feet_air_time += 0.2*torch.abs(self.next_L_foot_x-self.next_R_foot_x)*(L_touching_ground | R_touching_ground)
-
+        feet_air_time = 0.3 * foot_air_reward
+        feet_air_time += -0.05 * too_long
 
         # 惩罚扭矩使用
-        joint_effort_reward = -0.00002 * self.effort2 - -0.0002*self.effort1
+        joint_effort_reward = -0.00001 * self.effort2 - 0.00001 * self.effort1
 
         # 惩罚失败
         over1 = torch.any(torch.abs(self.next_body_ori) > np.pi / 3, dim=1)
-        over2 = torch.abs(self.next_body_ori[:,2]) > np.pi / 6
+        over2 = torch.abs(self.next_body_ori[:, 2]) > np.pi / 6
         over3 = (self.next_body_height < 0.83)
         over = over1 | over2 | over3
-        reward_fall = - over.float() * 3
+        reward_fall = - over.float() * 10
         reward = reward_fall + \
                  reward_ori_track + \
                  reward_height_track + \
@@ -418,7 +409,6 @@ class PPO:
         self.walking_phase_reward_sum += walking_phase_reward.float().mean()
         self.feet_air_time_reward_sum += feet_air_time.mean()
 
-
         self.foot_regularization_reward_sum += foot_regularization_reward.mean()
         self.joint_effort_reward_sum += joint_effort_reward.mean()
 
@@ -435,8 +425,8 @@ class PPO:
         self.prim_initialization(torch.nonzero(over).flatten())
         # ——————————————————————把over的机器人位置初始化结束————————————————————————————————#
         if not self.train:
-            if over.item() or self.time.item()>10:
-                self.next_body_pos = torch.norm(self.next_body_pos[:,:2]).item()
+            if over.item() or self.time.item() > 10:
+                self.next_body_pos = torch.norm(self.next_body_pos[:, :2]).item()
                 COT.compute_body_energy(self.next_body_pos, 20.81)
                 cot = COT.get_cot()
                 print(cot)
@@ -444,7 +434,6 @@ class PPO:
                 COT.plot_each_power()
                 COT.plot_each_vel()
                 COT.plot_energy()
-
 
     def play(self):
 

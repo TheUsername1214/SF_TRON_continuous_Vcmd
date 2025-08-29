@@ -1,5 +1,4 @@
 import mujoco.viewer
-import torch
 
 from Config import *
 from utils.NN import *

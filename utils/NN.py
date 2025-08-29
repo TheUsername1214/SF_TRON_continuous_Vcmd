@@ -23,6 +23,7 @@ class Actor(torch.nn.Module):
         mu = torch.nn.functional.tanh(self.mean(x))
 
         return self.act_scale*mu, self.std_scale*self.act_scale*torch.exp(-5*self.std)
+
 class Critic(torch.nn.Module):
     def __init__(self, state_dim, num_layers):
         super(Critic, self).__init__()
