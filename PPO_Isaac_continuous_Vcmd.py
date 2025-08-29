@@ -343,8 +343,8 @@ class PPO:
         self.L_feet_air_time += self.dt * (~self.next_L_foot_contact_situation)
         self.R_feet_air_time += self.dt * (~self.next_R_foot_contact_situation)
 
-        foot_air_reward = ((self.L_feet_air_time-0.5)*L_touching_ground+
-                           (self.R_feet_air_time-0.5)*R_touching_ground).clip(-11,0.5)
+        foot_air_reward = ((self.L_feet_air_time)*L_touching_ground+
+                           (self.R_feet_air_time)*R_touching_ground).clip(-11,0.5)
         too_long = (self.L_feet_air_time>0.6) | (self.R_feet_air_time>0.6)
 
         self.L_feet_air_time *= (~self.next_L_foot_contact_situation)

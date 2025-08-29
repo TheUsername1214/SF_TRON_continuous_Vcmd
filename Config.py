@@ -18,7 +18,7 @@ class RobotConfig:
         epsilon = 0.2
         maximum_step = 30
         episode = 1000
-        entropy_coef = -1  # positive means std increase, else decrease
+        entropy_coef = -.01  # positive means std increase, else decrease
         batch_size = 15000
 
     class EnvParam:  # 训练环境的参数
