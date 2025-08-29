@@ -1,43 +1,43 @@
 class RobotConfig:
     class CriticParam:  # Critic 神经网络 参数
-        state_dim = 24
+        state_dim = 32
         privilege_dim = 8
         critic_layers_num = 256
         critic_lr = 1e-4
-        critic_update_frequency = 150
+        critic_update_frequency = 200
 
     class ActorParam:  # Actor 神经网络 参数
         act_layers_num = 256
         actuator_num = 8
         actor_lr = 1e-4
-        actor_update_frequency = 20
+        actor_update_frequency = 100
 
     class PPOParam:  # 强化学习 PPO算法 参数
         gamma = 0.99
         lam = 0.95
         epsilon = 0.2
-        maximum_step = 30
-        episode = 1000
-        entropy_coef = -1  # positive means std increase, else decrease
-        batch_size = 25000
+        maximum_step = 25
+        episode = 300
+        entropy_coef = -0  # positive means std increase, else decrease
+        batch_size = 15000
 
     class EnvParam:  # 训练环境的参数
         agents_num = 1500
         agents_num_in_play = 1
         file_path = "C:/Users/21363/PycharmProjects/Isaac_Lab/TRON/SF_TRON_continuous_Vcmd/SF_TRON1A/USD/TRON.usd"  # abs path, not relative path
         prim_path = "SF_TRON"  # Relative to /World`
-        dt = 0.02
+        dt = 0.025
         sub_step = 10
         friction_coef = 1
 
     class RobotParam:  # 机器人的参数
         action_scale = 1
         std_scale = 1
-        Kp = 45
-        Kd = 3.5
+        Kp = [45,45,45,45,45,45,45,45]
+        Kd = [5, 5, 5, 5, 5, 5,0.8,0.8]
         initial_height = 0.85
         initial_body_vel_range = 0.1
-        initial_joint_pos_range = 0.1
+        initial_joint_pos_range = 0
         initial_joint_vel_range = 0.1
         initial_target_angle = [0,0,
                                 -0,0,

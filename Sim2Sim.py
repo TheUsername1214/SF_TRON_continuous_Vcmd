@@ -13,8 +13,8 @@ actuator_num = RobotConfig.ActorParam.actuator_num
 
 substep = RobotConfig.EnvParam.sub_step
 dt = RobotConfig.EnvParam.dt
-Kp = RobotConfig.RobotParam.Kp
-Kd = RobotConfig.RobotParam.Kd
+Kp =FT(RobotConfig.RobotParam.Kp)
+Kd = FT(RobotConfig.RobotParam.Kd)
 action_scale = RobotConfig.RobotParam.action_scale
 initial_angle = FT(RobotConfig.RobotParam.initial_target_angle)
 mujoco_dt = 0.001
@@ -26,7 +26,7 @@ model = mujoco.MjModel.from_xml_path("SF_TRON1A/urdf/robot.xml")
 data = mujoco.MjData(model)
 mujoco.mj_resetData(model, data)
 
-v_cmd = FT([-.5, 0, 0])
+v_cmd = FT([-1, 0, 0])
 sim_time = FT([0])
 
 with mujoco.viewer.launch_passive(model, data) as viewer:

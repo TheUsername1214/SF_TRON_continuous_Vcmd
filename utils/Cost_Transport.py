@@ -31,8 +31,8 @@ class Cost_Transport():
     def plot_each_angle(self):
         figure()
         for i in range(8):
-            plot(np.array(self.time),
-                 np.array(self.joint_angle))
+            plot(np.array(self.time).flatten(),
+                 np.array(self.joint_angle).flatten())
         xlabel("time[sec]")
         ylabel("angle[rad]")
         title("joint angle")
@@ -41,18 +41,20 @@ class Cost_Transport():
         figure()
         for i in range(8):
             subplot(4, 2, i + 1)
-            plot(np.array(self.time),
-                 np.array(self.joint_vel)[:, i])
+            plot(np.array(self.time).flatten(),
+                 np.array(self.joint_vel)[:, i].flatten())
             title(f"{self.name[i]}")
+            ylim(-10, 10)
         suptitle("angular vel")
 
     def plot_each_torque(self):
         figure()
         for i in range(8):
             subplot(4, 2, i + 1)
-            plot(np.array(self.time),
-                 np.array(self.joint_torque)[:, i], label=f"{self.name[i]}")
+            plot(np.array(self.time).flatten(),
+                 np.array(self.joint_torque)[:, i].flatten(), label=f"{self.name[i]}")
             title(f"{self.name[i]}")
+            ylim(0,45)
         legend()
         suptitle("Torque")
 
@@ -61,9 +63,10 @@ class Cost_Transport():
 
         for i in range(8):
             subplot(4, 2, i + 1)
-            plot(np.array(self.time),
-                 np.array(self.motor_power)[:, i], label=f"{self.name[i]}")
+            plot(np.array(self.time).flatten(),
+                 np.array(self.motor_power)[:, i].flatten(), label=f"{self.name[i]}")
             title(f"{self.name[i]}")
+            ylim(0, 100)
         legend()
         suptitle("Power")
 
