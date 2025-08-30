@@ -10,7 +10,7 @@ COT = Cost_Transport()
 # 导入Isaac Sim
 from isaacsim import SimulationApp
 
-headless = 0  # 是否开启UI
+headless = 1  # 是否开启UI
 sim = SimulationApp({"headless": headless})  # 启动Isaac Sim 软件， 必须放在导入Isaac sim 库之前。
 from isaacsim.core.api import World
 import isaacsim.core.utils.stage as stage_utils
@@ -348,7 +348,7 @@ class PPO:
 
         foot_air_reward = ((self.L_feet_air_time-0.5) * L_touching_ground +
                            (self.R_feet_air_time-0.5) * R_touching_ground)
-        too_long = (self.L_feet_air_time > 0.6) | (self.R_feet_air_time > 0.6)
+        too_long = (self.L_feet_air_time > 0.8) | (self.R_feet_air_time > 0.8)
 
         self.L_feet_air_time *= (~self.next_L_foot_contact_situation)
         self.R_feet_air_time *= (~self.next_R_foot_contact_situation)
@@ -439,7 +439,7 @@ class PPO:
         self.prim_initialization(torch.nonzero(over).flatten())
         # ——————————————————————把over的机器人位置初始化结束————————————————————————————————#
         if not self.train:
-            if over.item() or self.time.item() > 100:
+            if over.item() or self.time.item() > 30:
                 self.next_body_pos = torch.norm(self.next_body_pos[:, :2]).item()
                 COT.compute_body_energy(self.next_body_pos, 20.81)
                 cot = COT.get_cot()

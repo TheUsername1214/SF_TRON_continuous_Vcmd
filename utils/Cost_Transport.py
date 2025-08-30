@@ -10,6 +10,7 @@ class Cost_Transport():
         self.motor_power = []
         self.total_energy = []
         self.time = []
+        self.average_vel = []
 
         self.motor_energy = 0
         self.body_energy = 0
@@ -25,8 +26,10 @@ class Cost_Transport():
         self.total_energy.append([total_energy])
         self.time.append(time)
 
+
     def compute_body_energy(self, body_xy_pos, body_mass):
         self.body_energy = body_xy_pos * body_mass * 9.81
+        print(body_xy_pos/self.time[-1][0])
 
     def plot_each_angle(self):
         figure()

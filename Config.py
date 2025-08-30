@@ -34,11 +34,11 @@ class RobotConfig:
         action_scale = 1
         std_scale = 1
         Kp = [45,45,45,45,45,45,45,45]
-        Kd = [5, 5, 5, 5, 5, 5,0.8,0.8]
+        Kd = [5, 5, 2.5, 2.5, 2.5, 2.5,0.8,0.8]
         initial_height = 0.85
-        initial_body_vel_range = 0.1
+        initial_body_vel_range = 0
         initial_joint_pos_range = 0
-        initial_joint_vel_range = 0.1
+        initial_joint_vel_range = 0
         initial_target_angle = [0,0,
                                 -0,0,
                                 -1,1,
